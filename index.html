@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>karto kazik — Казино Денчика (Шотландец Вислоухий)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+body { background: #07050e; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+
+/* ФИГ ЭКРАН */
+#fig-screen { display: none; position: fixed; inset: 0; background: radial-gradient(circle, #ff0055, #000); z-index: 999999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; animation: figPulse 0.3s infinite alternate; }
+#fig-screen .fig-emoji { font-size: 130px; filter: drop-shadow(0 0 30px #ff0055); animation: figBounce 0.4s infinite alternate; }
+#fig-screen h1 { font-size: 34px; color: #fff; text-shadow: 0 0 20px #000; margin-top: 10px; }
+@keyframes figPulse { 0% { background: #ff0055; } 100% { background: #0b0010; } }
+@keyframes figBounce { 0% { transform: scale(1); } 100% { transform: scale(1.2) rotate(5deg); } }
+
+/* БАН ЭКРАН */
+#ban-screen { display: none; position: fixed; inset: 0; background: rgba(255, 0, 85, 0.98); z-index: 999999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+#ban-screen h1 { font-size: 40px; color: #fff; text-shadow: 0 0 20px #000; margin-bottom: 15px; }
+
+/* МОДАЛКИ */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 9999; justify-content: center; align-items: center; padding: 15px; }
+.modal.active { display: flex; }
+.modal-box { background: #15102a; border: 2px solid #7928ca; border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 0 30px #7928ca88; }
+.modal-box h3 { margin-bottom: 12px; color: #00ffcc; font-size: 20px; }
+.modal-input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #44356f; background: #0b0818; color: #00ffcc; font-size: 15px; font-weight: bold; text-align: center; outline: none; }
+
+/* ШАПКА */
+header { width: 100%; background: #110d1f; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ff007f; box-shadow: 0 0 25px rgba(255, 0, 127, 0.4); position: sticky; top: 0; z-index: 100; }
+.logo { font-size: 18px; font-weight: 900; background: linear-gradient(45deg, #ff007f, #00f0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.user-badge { background: #1d163a; padding: 5px 8px; border-radius: 12px; border: 1px solid #7928ca; font-size: 11px; color: #ffaa00; font-weight: bold; cursor: pointer; }
+.bank-box { background: linear-gradient(135deg, #1f1838, #2d2252); padding: 5px 8px; border-radius: 12px; border: 2px solid #00ffcc; color: #00ffcc; font-weight: 900; font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.timer-badge { background: #00ffcc; color: #000; padding: 2px 4px; border-radius: 6px; font-size: 9px; font-weight: 900; }
+.btn-promo { background: #7928ca; color: #fff; border: none; padding: 5px 8px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 11px; }
+.btn-withdraw { background: #ff0055; color: #fff; border: none; padding: 5px 8px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 11px; }
+.btn-admin-nav { background: #ffd700; color: #000; border: none; padding: 5px 8px; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 11px; display: none; }
+
+/* ЛАЙВ НОВОСТИ */
+.news-banner { width: 100%; background: #0d091e; border-bottom: 2px solid #7928ca; padding: 6px 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow: hidden; }
+.news-badge { background: #ff0055; color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 900; white-space: nowrap; animation: pulseRed 1s infinite alternate; }
+@keyframes pulseRed { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+.news-content { color: #00ffcc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* МЕНЮ ИГР */
+.games-nav { display: flex; gap: 6px; overflow-x: auto; padding: 10px; width: 100%; max-width: 950px; scrollbar-width: none; }
+.games-nav::-webkit-scrollbar { display: none; }
+.game-tab { background: #18132b; border: 1px solid #312752; color: #a093c4; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 12px; }
+.game-tab.active { background: linear-gradient(45deg, #ff007f, #7928ca); color: #fff; border-color: transparent; box-shadow: 0 0 12px rgba(255,0,127,0.5); }
+.game-tab.admin-tab { background: #ffd700; color: #000; display: none; }
+
+/* ИГРОВОЕ ПОЛЕ */
+.game-area { width: 95%; max-width: 500px; background: #130f24; border-radius: 18px; padding: 15px; border: 1px solid #2a2047; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
+.game-card { display: none; width: 100%; flex-direction: column; align-items: center; text-align: center; }
+.game-card.active { display: flex; }
+h2 { font-size: 18px; margin-bottom: 10px; color: #fff; }
+
+/* СТАВКИ */
+.bet-box { display: flex; justify-content: center; align-items: center; gap: 6px; background: #0c0917; padding: 6px; border-radius: 10px; border: 1px solid #2a2047; width: 100%; margin-bottom: 12px; }
+.bet-input { background: #191330; border: 1px solid #00ffcc; color: #00ffcc; font-size: 16px; font-weight: bold; padding: 5px 8px; border-radius: 6px; width: 120px; text-align: center; outline: none; }
+.btn-sm { background: #261f42; color: #fff; border: 1px solid #433773; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.btn-action { background: linear-gradient(45deg, #00ffcc, #007cf0); color: #000; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: 900; cursor: pointer; box-shadow: 0 0 15px rgba(0,255,204,0.3); text-transform: uppercase; width: 100%; }
+.btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+.msg { font-size: 13px; color: #ff007f; margin-top: 8px; min-height: 18px; font-weight: bold; text-align: center; }
+
+/* СЛОТЫ */
+.slots-reel-box { display: flex; gap: 8px; background: #080612; padding: 12px; border-radius: 15px; border: 2px solid #ff007f; margin: 10px 0; }
+.slot-reel { width: 75px; height: 95px; background: #18122e; border-radius: 10px; overflow: hidden; border: 1px solid #3c2a63; display: flex; justify-content: center; align-items: center; }
+.slot-symbol { font-size: 48px; transition: filter 0.1s; }
+.slot-reel.blur .slot-symbol { filter: blur(6px); transform: scaleY(1.2); }
+
+/* КРАШ */
+.crash-screen { width: 100%; height: 180px; background: #080612; border-radius: 12px; border: 2px solid #00f0ff; position: relative; overflow: hidden; }
+.rocket-svg { position: absolute; font-size: 38px; z-index: 5; transition: left 0.08s linear, bottom 0.08s linear; transform: translate(-50%, 50%) rotate(25deg); }
+.crash-num { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 38px; font-weight: 900; color: #00f0ff; text-shadow: 0 0 15px #00f0ff; z-index: 10; }
+
+/* КОЛЕСО / РУЛЕТКА */
+.wheel-disc { width: 190px; height: 190px; border-radius: 50%; border: 4px solid #ff007f; background: conic-gradient(#ff007f 0deg 72deg, #7928ca 72deg 144deg, #00f0ff 144deg 216deg, #00ffcc 216deg 288deg, #ffd700 288deg 360deg); display: flex; justify-content: center; align-items: center; font-size: 30px; font-weight: bold; transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 1); margin: 10px 0; }
+
+/* МИНЫ */
+.mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; margin: 10px 0; }
+.mine-btn { aspect-ratio: 1; background: #1d1738; border: 1px solid #362a69; border-radius: 6px; font-size: 22px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+
+/* РУЛЕТКА КНОПКИ */
+.roulette-btns { display: flex; gap: 8px; width: 100%; margin-top: 10px; }
+.btn-red { background: #ff0055; flex: 1; color:#fff; }
+.btn-black { background: #222; flex: 1; border: 1px solid #555; color:#fff; }
+.btn-green { background: #00ffcc; color: #000; flex: 1; }
+
+/* КЕЙСЫ */
+.case-container { width: 100%; background: #090714; border: 2px solid #7928ca; border-radius: 12px; padding: 12px 0; margin: 10px 0; overflow: hidden; position: relative; }
+.case-tape { display: flex; gap: 8px; transition: transform 4s cubic-bezier(0.05, 0.9, 0.2, 1); will-change: transform; padding-left: 180px; }
+.case-card-item { min-width: 95px; height: 110px; background: #18122e; border-radius: 10px; border: 2px solid #444; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 6px; gap: 4px; font-size: 10px; text-align: center; }
+.case-card-item .icon { font-size: 40px; }
+.case-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4px; height: 100%; background: #ff007f; z-index: 10; box-shadow: 0 0 10px #ff007f; }
+
+/* 21 ОЧКО И БАШНЯ */
+.cards-row { display: flex; gap: 8px; margin: 8px 0; min-height: 50px; justify-content: center; align-items: center; }
+.card-val { background: #1c1533; border: 1px solid #00ffcc; border-radius: 8px; padding: 8px 12px; font-size: 18px; font-weight: bold; }
+.tower-grid { display: flex; flex-direction: column-reverse; gap: 6px; width: 100%; margin: 10px 0; }
+.tower-row { display: flex; gap: 6px; }
+.tower-cell { flex: 1; height: 35px; background: #1d1738; border: 1px solid #362a69; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 16px; cursor: pointer; }
+
+/* КРИПТО */
+.crypto-card { width: 100%; background: #0c0917; border: 2px solid #00f0ff; border-radius: 12px; padding: 12px; margin: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.crypto-price { font-size: 26px; font-weight: 900; color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
+#crypto-chart { width: 100%; height: 90px; background: #080612; border-radius: 8px; border: 1px solid #1a1538; }
+
+/* ПЛИНКО */
+.plinko-board { width: 100%; height: 180px; background: #080612; border-radius: 12px; border: 2px solid #7928ca; position: relative; overflow: hidden; margin: 10px 0; }
+.plinko-ball { position: absolute; width: 14px; height: 14px; background: #ff007f; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 8px #ff007f; z-index: 5; }
+.plinko-slots { position: absolute; bottom: 0; width: 100%; display: flex; height: 25px; border-top: 1px solid #332857; }
+.plinko-slot { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: 900; background: #15102a; border-right: 1px solid #332857; color: #00ffcc; }
+
+/* СКРЕТЧ КАРТЫ */
+.scratch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin: 15px 0; }
+.scratch-card { aspect-ratio: 1; background: #261f42; border: 2px dashed #00ffcc; border-radius: 12px; font-size: 38px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+
+/* БИРЖА */
+.cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%; margin-top: 10px; }
+.card-item { background: #18122e; border-radius: 10px; padding: 10px; border: 2px solid #444; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; position: relative; cursor: pointer; text-align: center; }
+.card-img-box { width: 55px; height: 55px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 38px; background: #0a0717; }
+
+.rarity-common { border-color: #888; }
+.rarity-rare { border-color: #007cf0; }
+.rarity-epic { border-color: #7928ca; }
+.rarity-legendary { border-color: #ffd700; box-shadow: 0 0 8px #ffd70055; }
+.rarity-mythic { border-color: #ff0055; animation: pulse 1s infinite alternate; }
+.rarity-impossible { border-color: #00ffcc; animation: glowImpossible 0.6s infinite alternate; }
+.rarity-godly { border-color: #ffd700; background: linear-gradient(135deg, #18122e, #421133); animation: glowGodly 0.4s infinite alternate; }
+
+@keyframes glowImpossible { 0% { box-shadow: 0 0 5px #00ffcc; } 100% { box-shadow: 0 0 15px #ff007f; } }
+@keyframes glowGodly { 0% { box-shadow: 0 0 10px #ffd700; } 100% { box-shadow: 0 0 25px #00ffcc; } }
+
+/* ТАБЛИЦА ЛИДЕРОВ */
+.leaderboard-list { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.leader-item { background: #1c1633; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; font-weight: bold; border: 1px solid #332857; font-size: 12px; }
+.leader-item.you { border-color: #00ffcc; background: #00ffcc11; color: #00ffcc; }
+.leader-item.kartoshkin { border-color: #ffd700; background: linear-gradient(45deg, #ffd70022, #ff005522); color: #ffd700; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- ФИГ ЭКРАН -->
+<div id="fig-screen">
+<div class="fig-emoji">🖕🐱</div>
+<h1>ФИГ ТЕБЕ, А НЕ ВЫВОД!</h1>
+<p style="color:#fff; font-size:16px; margin-top:10px;">Денчик (Шотландец) забирает все себе!</p>
+<button class="btn-action" style="max-width:180px; margin-top:15px;" onclick="closeFig()">ЭХ, ДЕНЧИК...</button>
+</div>
+
+<!-- МОДАЛКА БАЛАНСА -->
+<div class="modal" id="balance-modal">
+<div class="modal-box">
+<h3>💰 Состояние Капитала</h3>
+<div id="balance-info-content" style="text-align:left; font-size:13px; margin:10px 0; display:flex; flex-direction:column; gap:8px;"></div>
+<button class="btn-action" onclick="closeModal('balance-modal')">ПОНЯТНО</button>
+</div>
+</div>
+
+<!-- МОДАЛКА ПРОМОКОДОВ -->
+<div class="modal" id="promo-modal">
+<div class="modal-box">
+<h3>🎁 Секретный Промокод</h3>
+<p style="font-size:11px; color:#aaa; margin-bottom:8px;">Промокоды: DENCHIK, CAT, SIGMA, LESSON, SCOTTISH, WHISKAS, DENCHIK2024</p>
+<input type="text" id="promo-input" class="modal-input" placeholder="Код..." style="text-transform:uppercase;">
+<button class="btn-action" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
+<button class="btn-sm" style="width:100%; margin-top:6px; background:transparent; border:none;" onclick="closeModal('promo-modal')">Отмена</button>
+</div>
+</div>
+
+<!-- МОДАЛКА ВЫВОДА -->
+<div class="modal" id="withdraw-modal">
+<div class="modal-box">
+<h3>💸 Вывод Денчиков</h3>
+<p style="font-size:11px; color:#aaa; margin-bottom:8px;">Введите сумму для вывода на карту:</p>
+<input type="number" id="withdraw-amount" class="modal-input" placeholder="Сумма..." value="50000">
+<button class="btn-action" style="width:100%" onclick="processWithdraw()">ПОДТВЕРДИТЬ ВЫВОД</button>
+<button class="btn-sm" style="width:100%; margin-top:6px; background:transparent; border:none;" onclick="closeModal('withdraw-modal')">Отмена</button>
+</div>
+</div>
+
+<!-- МОДАЛКА ВХОДА / РЕГИСТРАЦИИ -->
+<div class="modal active" id="auth-modal">
+<div class="modal-box">
+<h3 id="auth-title">Вход в karto kazik</h3>
+<p style="font-size:11px; color:#aaa; margin-bottom:8px;" id="auth-sub">Войдите или зарегистрируйтесь без ботов!</p>
+<input type="text" id="auth-username" class="modal-input" placeholder="Ваш ник..." maxlength="12">
+<input type="password" id="auth-password" class="modal-input" placeholder="Пароль..." maxlength="15">
+<button class="btn-action" style="width:100%" onclick="submitAuth()">ПОДТВЕРДИТЬ</button>
+<button class="btn-sm" style="width:100%; margin-top:8px; background:transparent; border:none; color:#00ffcc;" onclick="toggleAuthMode()" id="auth-toggle-btn">Создать новый аккаунт</button>
+</div>
+</div>
+
+<!-- БАН ЭКРАН -->
+<div id="ban-screen">
+<h1>🚨 ВНИМАНИЕ! 🚨</h1>
+<p style="font-size:20px; font-weight:bold;">ОБНАРУЖЕН АВТОКЛИКЕР!</p>
+<p style="margin-top: 8px; color: #fff;">Денчик забанил тебя за нечестную игру!</p>
+</div>
+
+<header>
+<div class="logo">⚡ karto kazik</div>
+<div class="header-right">
+<div class="user-badge" id="user-display" onclick="openModal('auth-modal')"> Войти</div>
+<button class="btn-admin-nav" id="admin-header-btn" onclick="tab('admin', document.getElementById('tab-admin-btn'))">👑 АДМИНКА</button>
+<button class="btn-promo" onclick="openModal('promo-modal')"> ПРОМО</button>
+<div class="bank-box" onclick="showBalanceDetails()">
+💰 <span id="balance">10000</span>
+<div class="timer-badge">+5k <span id="timer-sec">20</span>s</div>
+</div>
+<button class="btn-withdraw" onclick="openModal('withdraw-modal')">ВЫВОД</button>
+</div>
+</header>
+
+<!-- ЛАЙВ-НОВОСТИ -->
+<div class="news-banner">
+<div class="news-badge">🔴 ЛАЙВ НОВОСТИ</div>
+<div class="news-content" id="news-text-content">Загрузка свежих событий...</div>
+</div>
+
+<div class="games-nav">
+<button class="game-tab active" onclick="tab('slots', this)">🎰 Слоты</button>
+<button class="game-tab" onclick="tab('mines', this)">💣 Мины</button>
+<button class="game-tab" onclick="tab('crash', this)">🚀 Краш</button>
+<button class="game-tab" onclick="tab('plinko', this)">🔴 Плинко</button>
+<button class="game-tab" onclick="tab('scratch', this)">🎫 Скретч</button>
+<button class="game-tab" onclick="tab('wheel', this)">🌀 Колесо</button>
+<button class="game-tab" onclick="tab('roulette', this)">🎡 Рулетка</button>
+<button class="game-tab" onclick="tab('bj', this)">🃏 21 Очко</button>
+<button class="game-tab" onclick="tab('tower', this)">🏰 Башня</button>
+<button class="game-tab" onclick="tab('dice', this)">🎲 Кости</button>
+<button class="game-tab" onclick="tab('crypto', this)">📉 Инвестиции</button>
+<button class="game-tab" onclick="tab('shop', this)">📈 Кото-Биржа</button>
+<button class="game-tab" onclick="tab('cases', this)">📦 Кейсы</button>
+<button class="game-tab" onclick="tab('trade', this)">🤝 Трейды</button>
+<button class="game-tab" onclick="tab('inventory', this)">🎒 Инвентарь (<span id="inv-count">0</span>)</button>
+<button class="game-tab" onclick="tab('leaderboard', this)">🏆 ТОП Лидеров</button>
+<button class="game-tab admin-tab" id="tab-admin-btn" onclick="tab('admin', this)">👑 АДМИНКА</button>
+</div>
+
+<div class="game-area">
+
+<div class="bet-box" id="bet-container">
+<span style="font-size:13px; font-weight:bold; color:#aaa;">Ставка:</span>
+<input type="number" id="bet-input" class="bet-input" value="500" min="1" oninput="validateBet()">
+<button class="btn-sm" onclick="setBetMax()">MAX</button>
+</div>
+
+<!-- 1. СЛОТЫ -->
+<div class="game-card active" id="card-slots">
+<h2>🎰 Слоты Денчика</h2>
+<div class="slots-reel-box">
+<div class="slot-reel" id="slot-reel-1"><div class="slot-symbol" id="slot-1">🍒</div></div>
+<div class="slot-reel" id="slot-reel-2"><div class="slot-symbol" id="slot-2">🍋</div></div>
+<div class="slot-reel" id="slot-reel-3"><div class="slot-symbol" id="slot-3">7️⃣</div></div>
+</div>
+<button class="btn-action" id="btn-slots-spin" onclick="playSlots()">КРУТИТЬ СЛОТЫ</button>
+<div class="msg" id="msg-slots"></div>
+</div>
+
+<!-- 2. МИНЫ -->
+<div class="game-card" id="card-mines">
+<h2>💣 Мины Сапёр</h2>
+<button class="btn-action" id="mines-start-btn" onclick="startMines()">НАЧАТЬ ИГРУ</button>
+<div class="mines-grid" id="mines-grid"></div>
+<button class="btn-action" id="mines-cash-btn" style="background:#00ffcc; color:#000; display:none;" onclick="cashoutMines()">ЗАБРАТЬ ВЫИГРЫШ</button>
+<div class="msg" id="msg-mines"></div>
+</div>
+
+<!-- 3. КРАШ -->
+<div class="game-card" id="card-crash">
+<h2>🚀 Краш Ракета</h2>
+<div class="crash-screen">
+<div class="rocket-svg" id="crash-rocket">🚀</div>
+<div class="crash-num" id="crash-multi">1.00x</div>
+</div>
+<div style="display:flex; gap:8px; width:100%; margin-top:10px;">
+<button class="btn-action" id="crash-start-btn" onclick="startCrash()">СТАРТ (ФАРМ)</button>
+</div>
+<div class="msg" id="msg-crash"></div>
+</div>
+
+<!-- 4. ПЛИНКО -->
+<div class="game-card" id="card-plinko">
+<h2>🔴 Плинко Денчика</h2>
+<div class="plinko-board" id="plinko-board">
+<div class="plinko-slots">
+<div class="plinko-slot">0.2x</div>
+<div class="plinko-slot">1.2x</div>
+<div class="plinko-slot">3.0x</div>
+<div class="plinko-slot">1.2x</div>
+<div class="plinko-slot">0.2x</div>
+</div>
+</div>
+<button class="btn-action" id="plinko-drop-btn" onclick="playPlinko()">БРОСИТЬ ШАРИК</button>
+<div class="msg" id="msg-plinko"></div>
+</div>
+
+<!-- 5. СКРЕТЧ КАРТЫ -->
+<div class="game-card" id="card-scratch">
+<h2>🎫 Скретч Лотерея</h2>
+<p style="font-size:11px; color:#aaa;">Сотри 3 зоны! Выпадут 3 одинаковых котика — куш твой!</p>
+<div class="scratch-grid">
+<div class="scratch-card" onclick="scratchZone(0, this)">❓</div>
+<div class="scratch-card" onclick="scratchZone(1, this)">❓</div>
+<div class="scratch-card" onclick="scratchZone(2, this)">❓</div>
+</div>
+<button class="btn-action" id="scratch-buy-btn" onclick="buyScratch()">КУПИТЬ БИЛЕТ</button>
+<div class="msg" id="msg-scratch"></div>
+</div>
+
+<!-- 6. КОЛЕСО -->
+<div class="game-card" id="card-wheel">
+<h2>🌀 Колесо Удачи</h2>
+<div class="wheel-disc" id="wheel-disc-el">🌀</div>
+<button class="btn-action" id="wheel-btn" onclick="playWheel()">КРУТИТЬ КОЛЕСО</button>
+<div class="msg" id="msg-wheel"></div>
+</div>
+
+<!-- 7. РУЛЕТКА -->
+<div class="game-card" id="card-roulette">
+<h2>🎡 Рулетка Денчика</h2>
+<div class="wheel-disc" id="roulette-disc-el">🎡</div>
+<div class="roulette-btns">
+<button class="btn-action btn-red" id="r-red" onclick="playRoulette('red')">КРАСНОЕ (x2)</button>
+<button class="btn-action btn-black" id="r-black" onclick="playRoulette('black')">ЧЕРНОЕ (x2)</button>
+<button class="btn-action btn-green" id="r-green" onclick="playRoulette('green')">ЗЕЛЕНЫЕ (x14)</button>
+</div>
+<div class="msg" id="msg-roulette"></div>
+</div>
+
+<!-- 8. 21 ОЧКО -->
+<div class="game-card" id="card-bj">
+<h2>🃏 21 Очко с Денчиком</h2>
+<div id="bj-box" style="display:none; width:100%;">
+<p style="color:#aaa;">Карты Денчика: <span id="bj-dealer-score">?</span></p>
+<div class="cards-row" id="bj-dealer-cards"></div>
+<p style="color:#aaa;">Твои карты: <span id="bj-player-score">0</span></p>
+<div class="cards-row" id="bj-player-cards"></div>
+<div style="display:flex; gap:8px;">
+<button class="btn-action" onclick="hitBJ()">ЕЩЕ КАРТУ</button>
+<button class="btn-action" style="background:#ff0055; color:#fff;" onclick="standBJ()">ХВАТИТ</button>
+</div>
+</div>
+<button class="btn-action" id="bj-start-btn" onclick="startBJ()">РАЗДАТЬ КАРТЫ</button>
+<div class="msg" id="msg-bj"></div>
+</div>
+
+<!-- 9. БАШНЯ -->
+<div class="game-card" id="card-tower">
+<h2>🏰 Башня Денчика</h2>
+<div class="tower-grid" id="tower-grid"></div>
+<button class="btn-action" id="tower-start-btn" onclick="startTower()">НАЧАТЬ ПОДЪЕМ</button>
+<div class="msg" id="msg-tower"></div>
+</div>
+
+<!-- 10. КОСТИ -->
+<div class="game-card" id="card-dice">
+<h2>🎲 Кости (Больше/Меньше)</h2>
+<div style="font-size:55px; margin:10px;" id="dice-result">🎲 🎲</div>
+<div style="display:flex; gap:8px; width:100%;">
+<button class="btn-action" onclick="playDice('under')">МЕНЬШЕ (1-3)</button>
+<button class="btn-action" onclick="playDice('over')">БОЛЬШЕ (4-6)</button>
+</div>
+<div class="msg" id="msg-dice"></div>
+</div>
+
+<!-- 11. КРИПТО ИНВЕСТИЦИИ -->
+<div class="game-card" id="card-crypto">
+<h2>📉 Инвестиции в Кот-Биткоин (DEN-BTC)</h2>
+<div class="crypto-card">
+<span style="font-size:11px; color:#aaa;">КУРС DEN-BTC</span>
+<div class="crypto-price" id="crypto-price-val">50,000 💰</div>
+<canvas id="crypto-chart" width="400" height="90"></canvas>
+<span id="crypto-trend" style="font-size:11px; font-weight:bold; color:#00ffcc;">▲ +2.4% (РАСТЕТ)</span>
+</div>
+<div style="display:flex; gap:8px; width:100%; margin-top:8px;">
+<button class="btn-action" style="background:#00ffcc; color:#000;" onclick="tradeCrypto('up')">🟢 НА РОСТ</button>
+<button class="btn-action" style="background:#ff0055; color:#fff;" onclick="tradeCrypto('down')">🔴 НА ПАДЕНИЕ</button>
+</div>
+<div class="msg" id="msg-crypto"></div>
+</div>
+
+<!-- 12. КОТО-БИРЖА (40+ КОТОВ) -->
+<div class="game-card" id="card-shop">
+<h2>📈 Кото-Биржа Акций Денчиков (40+ Котиков)</h2>
+<div style="background: linear-gradient(135deg, #2b1147, #130a24); border: 2px dashed #00ffcc; border-radius: 12px; padding: 10px; width: 100%; margin-bottom: 10px; text-align: center;">
+<h3 style="color:#00ffcc; font-size:13px;">🐱 Создать своего Кот-Токена (1 Лимитка на игрока)</h3>
+<input type="text" id="custom-cat-name" class="modal-input" placeholder="Имя Кота..." style="margin:5px 0; font-size:13px; padding:6px;">
+<button class="btn-sm" style="background:#00ffcc; color:#000; width:100%; font-weight:bold;" onclick="createCustomCat()">СОЗДАТЬ СВОЕГО КОТА (50,000 💰)</button>
+</div>
+<div class="cards-grid" id="stock-grid"></div>
+</div>
+
+<!-- 13. КЕЙСЫ -->
+<div class="game-card" id="card-cases">
+<h2>📦 Кейсы с Котиками</h2>
+<div class="case-container">
+<div class="case-pointer"></div>
+<div class="case-tape" id="case-tape"></div>
+</div>
+<button class="btn-action" id="btn-open-case" onclick="openCase()">ОТКРЫТЬ КЕЙС (5,000 💰)</button>
+<div class="msg" id="msg-cases"></div>
+</div>
+
+<!-- 14. ТРЕЙДЫ МЕЖДУ ИГРОКАМИ -->
+<div class="game-card" id="card-trade">
+<h2>🤝 Трейды и Переводы Игрокам</h2>
+<div style="background:#18122e; border:2px solid #00f0ff; border-radius:12px; padding:12px; width:100%; text-align:left; display:flex; flex-direction:column; gap:10px;">
+<label style="font-size:12px; color:#aaa;">Выберите игрока для перевода:</label>
+<select id="trade-target-user" class="modal-input" style="background:#0c0917; color:#fff; text-align:left;"></select>
+
+<label style="font-size:12px; color:#aaa;">Сумма Денчиков 💰:</label>
+<input type="number" id="trade-amount" class="modal-input" placeholder="Сумма..." value="1000">
+<button class="btn-action" style="background:#00ffcc; color:#000;" onclick="sendTradeMoney()">ПЕРЕВЕСТИ ДЕНЬГИ</button>
+
+<hr style="border-color:#332857; margin:5px 0;">
+
+<label style="font-size:12px; color:#aaa;">Подарить Кота из инвентаря:</label>
+<select id="trade-target-cat" class="modal-input" style="background:#0c0917; color:#fff; text-align:left;"></select>
+<button class="btn-action" style="background:#7928ca; color:#fff;" onclick="sendTradeCat()">ПОДАРИТЬ КОТА</button>
+</div>
+<div class="msg" id="msg-trade"></div>
+</div>
+
+<!-- 15. ИНВЕНТАРЬ -->
+<div class="game-card" id="card-inventory">
+<h2>🎒 Твой Инвентарь</h2>
+<div class="cards-grid" id="inventory-grid"></div>
+</div>
+
+<!-- 16. ТОП ЛИДЕРОВ -->
+<div class="game-card" id="card-leaderboard">
+<h2>🏆 Настоящий ТОП Лидеров</h2>
+<p style="font-size:10px; color:#aaa; margin-bottom:8px;">Только реальные зарегистрированные игроки! Никаких ботов.</p>
+<div class="leaderboard-list" id="leaderboard-list"></div>
+</div>
+
+<!-- 17. ПАНЕЛЬ АДМИНИСТРАТОРА (КАРТОШКИН) -->
+<div class="game-card" id="card-admin">
+<h2>👑 Панель Администратора (Картошкин)</h2>
+<div style="background:#18122e; border:2px solid #ffd700; border-radius:12px; padding:12px; width:100%; text-align:left; display:flex; flex-direction:column; gap:10px;">
+<h3 style="color:#ffd700; font-size:14px; text-align:center;">⚡ НАКРУТКА СЕБЕ</h3>
+<button class="btn-action" style="background:#ffd700; color:#000;" onclick="adminAddSelf(1000000)">+1,000,000 💰 Себе</button>
+<button class="btn-action" style="background:#ff0055; color:#fff;" onclick="adminAddSelf(50000000)">+50,000,000 💰 Себе</button>
+
+<h3 style="color:#00ffcc; font-size:14px; text-align:center; margin-top:5px;">🐱 СПАВН ЛЮБОГО КОТА СЕБЕ</h3>
+<select id="admin-cat-spawn-select" class="modal-input" style="background:#0c0917; color:#fff; text-align:left;"></select>
+<button class="btn-action" style="background:#00ffcc; color:#000;" onclick="adminSpawnCat()">ПОЛУЧИТЬ ЭТОГО КОТА В ИНВЕНТАРЬ</button>
+
+<h3 style="color:#ffd700; font-size:14px; text-align:center; margin-top:5px;">📌 УПРАВЛЕНИЕ ТОПОМ</h3>
+<button class="btn-action" style="background:#7928ca; color:#fff;" onclick="adminTogglePinTop()">ЗАКРЕПИТЬ СЕБЯ НА 1 МЕСТЕ В ЛИДЕРАХ</button>
+
+<h3 style="color:#ff0055; font-size:14px; text-align:center; margin-top:5px;">🎁 ВЫДАЧА ДРУГОМУ ИГРОКУ</h3>
+<select id="admin-target-user" class="modal-input" style="background:#0c0917; color:#fff; text-align:left;"></select>
+<input type="number" id="admin-give-amount" class="modal-input" placeholder="Сумма денег..." value="100000">
+<button class="btn-action" style="background:#00ffcc; color:#000;" onclick="adminGiveMoney()">ВЫДАТЬ ДЕНЬГИ</button>
+</div>
+<div class="msg" id="msg-admin"></div>
+</div>
+
+</div>
+
+<script>
+// === СИНТЕЗАТОР БРАУЗЕРНЫХ ЗВУКОВ (WEB AUDIO API) ===
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    
+    if (type === 'click') {
+      osc.frequency.setValueAtTime(450, now);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+      osc.start(now); osc.stop(now + 0.05);
+    } else if (type === 'tick') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(750, now);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+      osc.start(now); osc.stop(now + 0.03);
+    } else if (type === 'win') {
+      osc.frequency.setValueAtTime(523, now);
+      osc.frequency.setValueAtTime(659, now + 0.1);
+      osc.frequency.setValueAtTime(783, now + 0.2);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      osc.start(now); osc.stop(now + 0.4);
+    } else if (type === 'lose') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(70, now + 0.35);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now); osc.stop(now + 0.35);
+    } else if (type === 'boom') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.linearRampToValueAtTime(20, now + 0.3);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
+    } else if (type === 'trade') {
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.setValueAtTime(900, now + 0.08);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+    }
+  } catch(e){}
+}
+
+// === СПИСОК ИЗ 40+ КОТОВ ДЛЯ БИРЖИ ===
+const denchikCats = [
+  { name: '🐈 Кот Дворовый', icon: '🐈', price: 1000, rarity: 'rarity-common' },
+  { name: '😸 Кот Уличный', icon: '😸', price: 2500, rarity: 'rarity-common' },
+  { name: '🐱 Денчик Домашний', icon: '🐱', price: 5000, rarity: 'rarity-common' },
+  { name: '😺 Милый Денчик', icon: '😺', price: 10000, rarity: 'rarity-common' },
+  { name: '😼 Денчик с Улыбкой', icon: '😼', price: 20000, rarity: 'rarity-rare' },
+  { name: '😻 Влюбленный Денчик', icon: '😻', price: 35000, rarity: 'rarity-rare' },
+  { name: '😽 Поцелуй Денчика', icon: '😽', price: 50000, rarity: 'rarity-rare' },
+  { name: '🙀 Испуганный Денчик', icon: '🙀', price: 75000, rarity: 'rarity-rare' },
+  { name: '😾 Сердитый Денчик', icon: '😾', price: 100000, rarity: 'rarity-epic' },
+  { name: '😻 Шотландец Вислоухий', icon: '🐈‍⬛', price: 150000, rarity: 'rarity-epic' },
+  { name: '👓 Денчик Очкарик', icon: '👓', price: 200000, rarity: 'rarity-epic' },
+  { name: '🎩 Денчик Джентльмен', icon: '🎩', price: 300000, rarity: 'rarity-epic' },
+  { name: '🧢 Денчик Рэпер', icon: '🧢', price: 450000, rarity: 'rarity-epic' },
+  { name: '💼 Бизнес Денчик', icon: '💼', price: 600000, rarity: 'rarity-legendary' },
+  { name: '🕶️ Денчик Крутой', icon: '🕶️', price: 800000, rarity: 'rarity-legendary' },
+  { name: '👑 Шейх Денчик Дубайский', icon: '👑', price: 1200000, rarity: 'rarity-legendary' },
+  { name: '🎓 Денчик Профессор', icon: '🎓', price: 1500000, rarity: 'rarity-legendary' },
+  { name: '🚀 Денчик Космонавт', icon: '🚀', price: 2000000, rarity: 'rarity-legendary' },
+  { name: '🏎️ Денчик Гонщик', icon: '🏎️', price: 3000000, rarity: 'rarity-legendary' },
+  { name: '🥊 Денчик Боксер', icon: '🥊', price: 4000000, rarity: 'rarity-legendary' },
+  { name: '🧙 Денчик Маг', icon: '🧙', price: 5500000, rarity: 'rarity-mythic' },
+  { name: '🥷 Денчик Ниндзя', icon: '🥷', price: 7000000, rarity: 'rarity-mythic' },
+  { name: '🦸 Денчик Супергерой', icon: '🦸', price: 9000000, rarity: 'rarity-mythic' },
+  { name: '🧟 Денчик Зомби', icon: '🧟', price: 12000000, rarity: 'rarity-mythic' },
+  { name: '🧛 Денчик Вампир', icon: '🧛', price: 15000000, rarity: 'rarity-mythic' },
+  { name: '🧜 Денчик Русалка', icon: '🧜', price: 20000000, rarity: 'rarity-mythic' },
+  { name: '🤖 Денчик Киборг', icon: '🤖', price: 28000000, rarity: 'rarity-mythic' },
+  { name: '👾 Денчик Пришелец', icon: '👾', price: 35000000, rarity: 'rarity-mythic' },
+  { name: '🎃 Денчик Хеллоуин', icon: '🎃', price: 45000000, rarity: 'rarity-mythic' },
+  { name: '🎄 Денчик Новогодний', icon: '🎄', price: 60000000, rarity: 'rarity-mythic' },
+  { name: '⚡ НЕВОЗМОЖНЫЙ БОГ ДЕНЧИК', icon: '⚡', price: 100000000, rarity: 'rarity-impossible' },
+  { name: '🔥 ДЕНЧИК ОГНЕННЫЙ ЛОРД', icon: '🔥', price: 150000000, rarity: 'rarity-impossible' },
+  { name: '❄️ ДЕНЧИК ЛЕДЯНОЙ ТИТАН', icon: '❄️', price: 200000000, rarity: 'rarity-impossible' },
+  { name: '🌌 ДЕНЧИК ГАЛАКТИЧЕСКИЙ', icon: '🌌', price: 300000000, rarity: 'rarity-impossible' },
+  { name: '💎 ДЕНЧИК АЛМАЗНЫЙ', icon: '💎', price: 450000000, rarity: 'rarity-impossible' },
+  { name: '☯️ ДЕНЧИК ИНЬ-ЯНЬ', icon: '☯️', price: 600000000, rarity: 'rarity-godly' },
+  { name: '🪐 ДЕНЧИК ВЛАСТЕЛИН КОСМОСА', icon: '🪐', price: 750000000, rarity: 'rarity-godly' },
+  { name: '✨ БОЖЕСТВЕННЫЙ ШОТЛАНДЕЦ', icon: '✨', price: 900000000, rarity: 'rarity-godly' },
+  { name: '👑 ВСЕВЫШНИЙ ДЕНЧИК 👑', icon: '🦁', price: 1000000000, rarity: 'rarity-godly' }
+];
+
+// === ДАННЫЕ И АНТИЧИТ ===
+let currentUser = null;
+let isRegMode = false;
+let usersData = JSON.parse(localStorage.getItem('karto_users_db') || '{}');
+let usedPromos = JSON.parse(localStorage.getItem('karto_used_promos') || '[]');
+let clickHistory = [];
+let isTopPinned = localStorage.getItem('karto_top_pinned') === 'true';
+
+function checkAntiCheat() {
+  const now = Date.now();
+  clickHistory.push(now);
+  clickHistory = clickHistory.filter(t => now - t < 1000);
+  if (clickHistory.length > 9) {
+    document.getElementById('ban-screen').style.display = 'flex';
+    playSound('boom');
+    return false;
+  }
+  return true;
+}
+
+function getBalance() {
+  if (!currentUser || !usersData[currentUser]) return 0;
+  return usersData[currentUser].balance;
+}
+
+function setBalance(val) {
+  if (!currentUser) return;
+  usersData[currentUser].balance = Math.max(0, Math.floor(val));
+  saveState();
+  updateUI();
+}
+
+function saveState() {
+  localStorage.setItem('karto_users_db', JSON.stringify(usersData));
+  localStorage.setItem('karto_used_promos', JSON.stringify(usedPromos));
+  localStorage.setItem('karto_top_pinned', isTopPinned);
+  if (currentUser) {
+    localStorage.setItem('karto_current_user', currentUser);
+  }
+}
+
+function updateUI() {
+  if (currentUser) {
+    document.getElementById('balance').textContent = getBalance().toLocaleString();
+    document.getElementById('user-display').textContent = '👤 ' + currentUser;
+    document.getElementById('inv-count').textContent = (usersData[currentUser].inventory || []).length;
+    
+    if (currentUser === 'Картошкин') {
+      document.getElementById('admin-header-btn').style.display = 'inline-block';
+      document.getElementById('tab-admin-btn').style.display = 'inline-block';
+    } else {
+      document.getElementById('admin-header-btn').style.display = 'none';
+      document.getElementById('tab-admin-btn').style.display = 'none';
+    }
+  }
+  updateLeaderboard();
+  updateAdminLists();
+  updateTradeLists();
+}
+
+function showBalanceDetails() {
+  if (!currentUser) return;
+  playSound('click');
+  const inv = usersData[currentUser].inventory || [];
+  const content = document.getElementById('balance-info-content');
+  content.innerHTML = `
+    <div>💵 <b>Наличные:</b> ${getBalance().toLocaleString()} 💰</div>
+    <div>📦 <b>Предметов в инвентаре:</b> ${inv.length} шт.</div>
+    <div>🐱 <b>Категория:</b> ${getBalance() > 1000000 ? '👑 МИЛЛИОНЕР ДЕНЧИКА' : '😼 ИГРОК'}</div>
+  `;
+  openModal('balance-modal');
+}
+
+// === ВХОД / РЕГИСТРАЦИЯ ===
+function toggleAuthMode() {
+  isRegMode = !isRegMode;
+  document.getElementById('auth-title').textContent = isRegMode ? 'Регистрация' : 'Вход в karto kazik';
+  document.getElementById('auth-toggle-btn').textContent = isRegMode ? 'Уже есть аккаунт? Войти' : 'Создать новый аккаунт';
+}
+
+function submitAuth() {
+  if (!checkAntiCheat()) return;
+  const user = document.getElementById('auth-username').value.trim();
+  const pass = document.getElementById('auth-password').value.trim();
+  
+  if (!user || !pass) return alert('Введи Ник и Пароль!');
+  
+  if (isRegMode) {
+    if (usersData[user]) return alert('Этот ник уже занят!');
+    usersData[user] = { password: pass, balance: 10000, inventory: [], customCatCreated: false };
+  } else {
+    if (!usersData[user]) return alert('Аккаунт не найден! Нажмите "Создать новый аккаунт".');
+    if (usersData[user].password !== pass) return alert('Неверный пароль!');
+  }
+  
+  currentUser = user;
+  saveState();
+  updateUI();
+  closeModal('auth-modal');
+  playSound('win');
+}
+
+function updateLeaderboard() {
+  const list = document.getElementById('leaderboard-list');
+  let sorted = Object.keys(usersData).map(u => ({ nick: u, bal: usersData[u].balance }))
+    .sort((a,b) => b.bal - a.bal);
+    
+  if (isTopPinned && usersData['Картошкин']) {
+    sorted = sorted.filter(i => i.nick !== 'Картошкин');
+    sorted.unshift({ nick: 'Картошкин', bal: usersData['Картошкин'].balance });
+  }
+    
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="text-align:center; color:#777;">Пока никто не зарегистрировался...</div>';
+    return;
+  }
+  
+  list.innerHTML = sorted.map((item, idx) => `
+    <div class="leader-item ${item.nick === currentUser ? 'you' : ''} ${item.nick === 'Картошкин' ? 'kartoshkin' : ''}">
+      <span>${idx + 1}. ${idx === 0 ? '👑 ' : ''}${item.nick}</span>
+      <span>💰 ${item.bal.toLocaleString()}</span>
+    </div>
+  `).join('');
+}
+
+function validateBet() {
+  const input = document.getElementById('bet-input');
+  if (parseInt(input.value) < 1 || isNaN(parseInt(input.value))) {
+    input.value = 1;
+  }
+}
+
+function getBet() {
+  if (!checkAntiCheat()) return 0;
+  const input = document.getElementById('bet-input');
+  let val = Math.floor(parseInt(input.value) || 0);
+  if (val <= 0) val = 1;
+  if (val > getBalance()) {
+    val = getBalance();
+    input.value = val;
+  }
+  return val;
+}
+
+function setBetMax() {
+  document.getElementById('bet-input').value = getBalance();
+  playSound('click');
+}
+
+function tab(name, btn) {
+  playSound('click');
+  document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('card-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'inventory') renderInventory();
+  if (name === 'shop') renderStockMarket();
+  if (name === 'cases') initCaseTape();
+  if (name === 'crypto') drawCryptoChart();
+}
+
+function openModal(id) { playSound('click'); document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function usePromo() {
+  const code = document.getElementById('promo-input').value.toUpperCase().trim();
+  const promos = { 'DENCHIK': 5000, 'CAT': 3000, 'SIGMA': 2500, 'LESSON': 2000, 'SCOTTISH': 4000, 'WHISKAS': 6000, 'DENCHIK2024': 10000 };
+  const promoKey = code + '_' + currentUser;
+  if (usedPromos.includes(promoKey)) return alert('Уже активировал!');
+  if (promos[code]) {
+    setBalance(getBalance() + promos[code]);
+    usedPromos.push(promoKey);
+    saveState();
+    alert('Успех! +' + promos[code] + ' 💰');
+    playSound('win');
+    closeModal('promo-modal');
+  } else { alert('Неверный промокод!'); }
+}
+
+function processWithdraw() { closeModal('withdraw-modal'); document.getElementById('fig-screen').style.display = 'flex'; playSound('lose'); }
+function closeFig() { document.getElementById('fig-screen').style.display = 'none'; }
+
+// === ИГРА 1: СЛОТЫ ===
+function playSlots() {
+  const bet = getBet();
+  if (bet <= 0 || bet > getBalance()) return alert('Мало денег!');
+  
+  const btnSpin = document.getElementById('btn-slots-spin');
+  btnSpin.disabled = true;
+  setBalance(getBalance() - bet);
+  
+  const icons = ['🍒', '🍋', '🍊', '🍉', '⭐', '💎', '7️⃣'];
+  const r1 = document.getElementById('slot-reel-1');
+  const r2 = document.getElementById('slot-reel-2');
+  const r3 = document.getElementById('slot-reel-3');
+  const s1 = document.getElementById('slot-1');
+  const s2 = document.getElementById('slot-2');
+  const s3 = document.getElementById('slot-3');
+  
+  r1.classList.add('blur'); r2.classList.add('blur'); r3.classList.add('blur');
+  
+  let t1 = setInterval(() => { s1.textContent = icons[Math.floor(Math.random()*icons.length)]; playSound('tick'); }, 80);
+  let t2 = setInterval(() => { s2.textContent = icons[Math.floor(Math.random()*icons.length)]; }, 80);
+  let t3 = setInterval(() => { s3.textContent = icons[Math.floor(Math.random()*icons.length)]; }, 80);
+  
+  const isWin = Math.random() < 0.22;
+  let res1 = icons[Math.floor(Math.random()*icons.length)];
+  let res2 = isWin ? res1 : icons[Math.floor(Math.random()*icons.length)];
+  let res3 = isWin ? res1 : icons[(icons.indexOf(res1)+1)%icons.length];
+  
+  setTimeout(() => { clearInterval(t1); r1.classList.remove('blur'); s1.textContent = res1; playSound('tick'); }, 1000);
+  setTimeout(() => { clearInterval(t2); r2.classList.remove('blur'); s2.textContent = res2; playSound('tick'); }, 2000);
+  setTimeout(() => {
+    clearInterval(t3); r3.classList.remove('blur'); s3.textContent = res3; playSound('tick');
+    btnSpin.disabled = false;
+    if (res1 === res2 && res2 === res3) {
+      const win = bet * 4; setBalance(getBalance() + win);
+      document.getElementById('msg-slots').textContent = '🎉 ВЫИГРЫШ: +' + win + ' 💰'; playSound('win');
+    } else {
+      document.getElementById('msg-slots').textContent = '😿 Проигрыш!'; playSound('lose');
+    }
+  }, 3000);
+}
+
+// === ИГРА 2: МИНЫ ===
+let mineBet = 0, mineGrid = [], minesActive = false;
+function startMines() {
+  mineBet = getBet();
+  if (mineBet <= 0 || mineBet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - mineBet);
+  minesActive = true; mineGrid = Array(25).fill(false);
+  let placed = 0;
+  while(placed < 5) { let idx = Math.floor(Math.random()*25); if (!mineGrid[idx]) { mineGrid[idx] = true; placed++; } }
+  const gridEl = document.getElementById('mines-grid'); gridEl.innerHTML = '';
+  for(let i=0; i<25; i++) {
+    const btn = document.createElement('div'); btn.className = 'mine-btn'; btn.textContent = '❓';
+    btn.onclick = () => stepMine(i, btn); gridEl.appendChild(btn);
+  }
+  document.getElementById('mines-start-btn').style.display = 'none';
+  document.getElementById('mines-cash-btn').style.display = 'block';
+}
+
+function stepMine(idx, btn) {
+  if (!minesActive || btn.textContent !== '❓') return;
+  if (mineGrid[idx]) {
+    btn.textContent = '💣'; btn.style.background = '#ff0055'; minesActive = false;
+    document.getElementById('msg-mines').textContent = '💥 БУМ! Подорвался!'; playSound('boom');
+    document.getElementById('mines-start-btn').style.display = 'block';
+    document.getElementById('mines-cash-btn').style.display = 'none';
+  } else {
+    btn.textContent = '💎'; btn.style.background = '#00ffcc'; btn.style.color = '#000'; playSound('tick');
+  }
+}
+
+function cashoutMines() {
+  if (!minesActive) return; minesActive = false;
+  const win = Math.floor(mineBet * 1.5); setBalance(getBalance() + win);
+  document.getElementById('msg-mines').textContent = '🎉 Забрал: +' + win + ' 💰'; playSound('win');
+  document.getElementById('mines-start-btn').style.display = 'block';
+  document.getElementById('mines-cash-btn').style.display = 'none';
+}
+
+// === ИГРА 3: КРАШ ===
+let crashInterval = null, crashMulti = 1.0, crashBetVal = 0, crashRunning = false;
+function startCrash() {
+  if (crashRunning) return;
+  crashBetVal = getBet();
+  if (crashBetVal <= 0 || crashBetVal > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - crashBetVal);
+  crashRunning = true; crashMulti = 1.0;
+  document.getElementById('crash-start-btn').disabled = true;
+  document.getElementById('msg-crash').textContent = '🚀 Ракета в полёте!';
+  const crashPoint = (Math.random() * Math.random() * 3.5 + 1.01).toFixed(2);
+  const rocket = document.getElementById('crash-rocket');
+  
+  crashInterval = setInterval(() => {
+    crashMulti += 0.03;
+    document.getElementById('crash-multi').textContent = crashMulti.toFixed(2) + 'x';
+    rocket.style.left = Math.min(80, (crashMulti * 15)) + '%';
+    rocket.style.bottom = Math.min(70, (crashMulti * 12)) + '%';
+    
+    if (crashMulti >= crashPoint) {
+      clearInterval(crashInterval); crashRunning = false;
+      document.getElementById('msg-crash').textContent = '💥 КРАШ на ' + crashPoint + 'x!';
+      document.getElementById('crash-start-btn').disabled = false;
+      rocket.style.left = '10px'; rocket.style.bottom = '10px'; playSound('boom');
+    }
+  }, 100);
+}
+
+// === ИГРА 4: ПЛИНКО ===
+function playPlinko() {
+  const bet = getBet();
+  if (bet <= 0 || bet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - bet);
+  document.getElementById('plinko-drop-btn').disabled = true;
+  
+  const board = document.getElementById('plinko-board');
+  const ball = document.createElement('div');
+  ball.className = 'plinko-ball';
+  board.appendChild(ball);
+  
+  let x = 50, y = 10;
+  ball.style.left = x + '%'; ball.style.top = y + '%';
+  
+  let step = 0;
+  const interval = setInterval(() => {
+    step++;
+    y += 15;
+    x += (Math.random() < 0.5 ? -6 : 6);
+    x = Math.max(10, Math.min(90, x));
+    ball.style.left = x + '%'; ball.style.top = y + '%';
+    playSound('tick');
+    
+    if (step >= 9) {
+      clearInterval(interval);
+      board.removeChild(ball);
+      document.getElementById('plinko-drop-btn').disabled = false;
+      
+      let multi = 0.2;
+      if (x > 30 && x < 70) multi = 3.0;
+      else if (x >= 20 && x <= 80) multi = 1.2;
+      
+      const win = Math.floor(bet * multi);
+      setBalance(getBalance() + win);
+      document.getElementById('msg-plinko').textContent = `🔴 Множитель ${multi}x! +${win} 💰`;
+      if (multi >= 1.2) playSound('win'); else playSound('lose');
+    }
+  }, 150);
+}
+
+// === ИГРА 5: СКРЕТЧ ===
+let scratchIcons = ['🐱', '👑', '⚡'];
+let currentScratch = [];
+let scratchedCount = 0;
+let scratchBet = 0;
+
+function buyScratch() {
+  scratchBet = getBet();
+  if (scratchBet <= 0 || scratchBet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - scratchBet);
+  
+  scratchedCount = 0;
+  const isWin = Math.random() < 0.25;
+  const mainIcon = scratchIcons[Math.floor(Math.random()*scratchIcons.length)];
+  if (isWin) {
+    currentScratch = [mainIcon, mainIcon, mainIcon];
+  } else {
+    currentScratch = [mainIcon, scratchIcons[1], scratchIcons[2]];
+  }
+  
+  document.querySelectorAll('.scratch-card').forEach(c => {
+    c.textContent = '❓'; c.style.background = '#261f42';
+  });
+  document.getElementById('msg-scratch').textContent = 'Стирай клетки!';
+  playSound('click');
+}
+
+function scratchZone(idx, el) {
+  if (currentScratch.length === 0 || el.textContent !== '❓') return;
+  el.textContent = currentScratch[idx];
+  el.style.background = '#15102a';
+  scratchedCount++;
+  playSound('tick');
+  
+  if (scratchedCount === 3) {
+    if (currentScratch[0] === currentScratch[1] && currentScratch[1] === currentScratch[2]) {
+      const win = scratchBet * 5;
+      setBalance(getBalance() + win);
+      document.getElementById('msg-scratch').textContent = '🎉 СОВПАДЕНИЕ 3/3! +' + win + ' 💰';
+      playSound('win');
+    } else {
+      document.getElementById('msg-scratch').textContent = '😿 Не совпали!';
+      playSound('lose');
+    }
+    currentScratch = [];
+  }
+}
+
+// === ИГРА 6: КОЛЕСО ===
+let wheelRot = 0;
+function playWheel() {
+  const bet = getBet();
+  if (bet <= 0 || bet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - bet);
+  document.getElementById('wheel-btn').disabled = true;
+  
+  wheelRot += 1800 + Math.floor(Math.random()*360);
+  document.getElementById('wheel-disc-el').style.transform = `rotate(${wheelRot}deg)`;
+  playSound('tick');
+  
+  setTimeout(() => {
+    document.getElementById('wheel-btn').disabled = false;
+    const mults = [0, 0.5, 1.2, 1.5, 0, 2.5];
+    const res = mults[Math.floor(Math.random()*mults.length)];
+    const win = Math.floor(bet * res); setBalance(getBalance() + win);
+    if (win > 0) { document.getElementById('msg-wheel').textContent = '🎉 x' + res + '! +' + win + ' 💰'; playSound('win'); }
+    else { document.getElementById('msg-wheel').textContent = '😿 0x!'; playSound('lose'); }
+  }, 4000);
+}
+
+// === ИГРА 7: РУЛЕТКА ===
+let rouletteRot = 0;
+function playRoulette(choice) {
+  const bet = getBet();
+  if (bet <= 0 || bet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - bet);
+  
+  document.getElementById('r-red').disabled = true;
+  document.getElementById('r-black').disabled = true;
+  document.getElementById('r-green').disabled = true;
+  
+  rouletteRot += 1800 + Math.floor(Math.random()*360);
+  document.getElementById('roulette-disc-el').style.transform = `rotate(${rouletteRot}deg)`;
+  playSound('tick');
+  
+  setTimeout(() => {
+    document.getElementById('r-red').disabled = false;
+    document.getElementById('r-black').disabled = false;
+    document.getElementById('r-green').disabled = false;
+    
+    const norm = rouletteRot % 360;
+    let color = norm < 120 ? 'red' : (norm > 240 ? 'green' : 'black');
+    if (choice === color) {
+      const multi = color === 'green' ? 14 : 2;
+      const win = bet * multi; setBalance(getBalance() + win);
+      document.getElementById('msg-roulette').textContent = '🎉 ' + color.toUpperCase() + '! +' + win + ' 💰'; playSound('win');
+    } else {
+      document.getElementById('msg-roulette').textContent = '😿 ' + color.toUpperCase(); playSound('lose');
+    }
+  }, 4000);
+}
+
+// === ИГРА 8: 21 ОЧКО ===
+let bjPlayer = 0, bjDealer = 0, bjBet = 0;
+function startBJ() {
+  bjBet = getBet();
+  if (bjBet <= 0 || bjBet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - bjBet);
+  
+  bjPlayer = Math.floor(Math.random()*6 + 12);
+  bjDealer = Math.floor(Math.random()*6 + 13);
+  
+  document.getElementById('bj-box').style.display = 'block';
+  document.getElementById('bj-start-btn').style.display = 'none';
+  document.getElementById('bj-player-score').textContent = bjPlayer;
+  document.getElementById('bj-dealer-score').textContent = '?';
+  playSound('click');
+}
+
+function hitBJ() {
+  bjPlayer += Math.floor(Math.random()*5 + 1);
+  document.getElementById('bj-player-score').textContent = bjPlayer;
+  if (bjPlayer > 21) {
+    document.getElementById('msg-bj').textContent = '💥 Перебор! Победил Денчик.';
+    playSound('lose');
+    resetBJ();
+  }
+}
+
+function standBJ() {
+  document.getElementById('bj-dealer-score').textContent = bjDealer;
+  if (bjDealer > 21 || bjPlayer > bjDealer) {
+    const win = bjBet * 2;
+    setBalance(getBalance() + win);
+    document.getElementById('msg-bj').textContent = '🎉 Ты обыграл Денчика! +' + win + ' 💰';
+    playSound('win');
+  } else {
+    document.getElementById('msg-bj').textContent = '😿 Победил Денчик!';
+    playSound('lose');
+  }
+  resetBJ();
+}
+
+function resetBJ() {
+  document.getElementById('bj-box').style.display = 'none';
+  document.getElementById('bj-start-btn').style.display = 'block';
+}
+
+// === ИГРА 9: БАШНЯ ===
+function startTower() {
+  const bet = getBet();
+  if (bet <= 0 || bet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - bet);
+  
+  const win = Math.random() < 0.35 ? bet * 2 : 0;
+  setBalance(getBalance() + win);
+  if (win > 0) {
+    document.getElementById('msg-tower').textContent = '🎉 Залез на вершину! +' + win + ' 💰';
+    playSound('win');
+  } else {
+    document.getElementById('msg-tower').textContent = '💥 Упал с башни!';
+    playSound('lose');
+  }
+}
+
+// === ИГРА 10: КОСТИ ===
+function playDice(type) {
+  const bet = getBet();
+  if (bet <= 0 || bet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - bet);
+  
+  const roll = Math.floor(Math.random()*6 + 1);
+  document.getElementById('dice-result').textContent = '🎲 ' + roll;
+  
+  const winCondition = (type === 'under' && roll <= 3) || (type === 'over' && roll >= 4);
+  if (winCondition) {
+    const win = bet * 2;
+    setBalance(getBalance() + win);
+    document.getElementById('msg-dice').textContent = '🎉 Угадал! +' + win + ' 💰';
+    playSound('win');
+  } else {
+    document.getElementById('msg-dice').textContent = '😿 Не угадал!';
+    playSound('lose');
+  }
+}
+
+// === ИГРА 11: КРИПТО ===
+let cryptoPrice = 50000;
+let priceHistory = [50000, 50500, 49800, 51000, 50200, 51500, 52000];
+
+function drawCryptoChart() {
+  const canvas = document.getElementById('crypto-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.beginPath();
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 3;
+  
+  const min = Math.min(...priceHistory) * 0.95;
+  const max = Math.max(...priceHistory) * 1.05;
+  
+  priceHistory.forEach((price, idx) => {
+    const x = (idx / (priceHistory.length - 1)) * (canvas.width - 30) + 15;
+    const y = canvas.height - ((price - min) / (max - min)) * (canvas.height - 20) - 10;
+    if (idx === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  
+  const lastX = canvas.width - 15;
+  const lastY = canvas.height - ((priceHistory[priceHistory.length - 1] - min) / (max - min)) * (canvas.height - 20) - 10;
+  ctx.font = '16px serif';
+  ctx.fillText('🐱', lastX - 8, lastY + 5);
+}
+
+setInterval(() => {
+  const delta = (Math.random() * 0.12 - 0.06);
+  cryptoPrice = Math.max(5000, Math.floor(cryptoPrice * (1 + delta)));
+  priceHistory.push(cryptoPrice);
+  if (priceHistory.length > 15) priceHistory.shift();
+  
+  const el = document.getElementById('crypto-price-val');
+  const trend = document.getElementById('crypto-trend');
+  if (el) {
+    el.textContent = cryptoPrice.toLocaleString() + ' 💰';
+    if (delta >= 0) {
+      trend.textContent = `▲ +${(delta*100).toFixed(1)}% (РАСТЕТ)`; trend.style.color = '#00ffcc';
+    } else {
+      trend.textContent = `▼ ${(delta*100).toFixed(1)}% (ПАДАЕТ)`; trend.style.color = '#ff0055';
+    }
+    drawCryptoChart();
+  }
+}, 2000);
+
+function tradeCrypto(direction) {
+  const bet = getBet();
+  if (bet <= 0 || bet > getBalance()) return alert('Мало денег!');
+  setBalance(getBalance() - bet); playSound('click');
+  
+  setTimeout(() => {
+    const isUp = Math.random() < 0.48;
+    if ((direction === 'up' && isUp) || (direction === 'down' && !isUp)) {
+      const win = Math.floor(bet * 1.85); setBalance(getBalance() + win);
+      document.getElementById('msg-crypto').textContent = '📈 УСПЕХ! +' + win + ' 💰'; playSound('win');
+    } else {
+      document.getElementById('msg-crypto').textContent = '📉 МИНУС!'; playSound('lose');
+    }
+  }, 1200);
+}
+
+// === ИГРА 12: КОТО-БИРЖА (40+ КОТОВ) ===
+function renderStockMarket() {
+  const grid = document.getElementById('stock-grid');
+  grid.innerHTML = denchikCats.map(c => `
+    <div class="card-item ${c.rarity}" onclick="buyCatStock('${c.name}', '${c.icon}', ${c.price})">
+      <div class="card-img-box">${c.icon}</div>
+      <b>${c.name}</b>
+      <span style="color:#00ffcc; font-weight:bold;">${c.price.toLocaleString()} 💰</span>
+    </div>
+  `).join('');
+}
+
+function buyCatStock(name, icon, price) {
+  if (getBalance() < price) return alert('Мало денег!');
+  setBalance(getBalance() - price);
+  usersData[currentUser].inventory.push({ name, icon, price: Math.floor(price * 0.7) });
+  saveState(); alert('Куплен: ' + name); playSound('win');
+}
+
+function createCustomCat() {
+  if (usersData[currentUser].customCatCreated) {
+    return alert('Вы уже создали своего Лимитного Кота! Максимум 1 кот на игрока.');
+  }
+  const name = document.getElementById('custom-cat-name').value.trim();
+  if (!name) return alert('Введи имя кота!');
+  if (getBalance() < 50000) return alert('Нужно 50,000 💰!');
+  setBalance(getBalance() - 50000);
+  usersData[currentUser].customCatCreated = true;
+  usersData[currentUser].inventory.push({ name: '🌟 ' + name + ' (Лимитка)', icon: '🌟', price: 35000 });
+  saveState(); alert('Создан лимитный кот!'); playSound('win');
+  document.getElementById('custom-cat-name').value = '';
+}
+
+// === ИГРА 13: КЕЙСЫ ===
+function initCaseTape() {
+  const tape = document.getElementById('case-tape');
+  tape.style.transition = 'none'; tape.style.transform = 'translateX(0px)';
+  let html = '';
+  for(let i=0; i<45; i++) {
+    const item = denchikCats[Math.floor(Math.random()*denchikCats.length)];
+    html += `<div class="case-card-item"><div class="icon">${item.icon}</div><b>${item.name}</b></div>`;
+  }
+  tape.innerHTML = html;
+}
+
+function openCase() {
+  if (getBalance() < 5000) return alert('Нужно 5,000 💰!');
+  setBalance(getBalance() - 5000);
+  document.getElementById('btn-open-case').disabled = true;
+  
+  initCaseTape();
+  const tape = document.getElementById('case-tape');
+  const winIndex = 30 + Math.floor(Math.random()*5);
+  const winItem = denchikCats[Math.floor(Math.random()*denchikCats.length)];
+  
+  let tickTimer = setInterval(() => { playSound('tick'); }, 120);
+  
+  setTimeout(() => {
+    tape.style.transition = 'transform 4s cubic-bezier(0.05, 0.9, 0.2, 1)';
+    tape.style.transform = `translateX(-${winIndex * 105 - 90}px)`;
+  }, 50);
+  
+  setTimeout(() => {
+    clearInterval(tickTimer);
+    document.getElementById('btn-open-case').disabled = false;
+    usersData[currentUser].inventory.push({ name: winItem.name, icon: winItem.icon, price: Math.floor(winItem.price * 0.5) });
+    saveState();
+    document.getElementById('msg-cases').textContent = '🎉 ВЫПАЛО: ' + winItem.name;
+    playSound('win');
+  }, 4000);
+}
+
+// === ИГРА 14: ТРЕЙДЫ МЕЖДУ ИГРОКАМИ ===
+function updateTradeLists() {
+  const userSelect = document.getElementById('trade-target-user');
+  const catSelect = document.getElementById('trade-target-cat');
+  if (!userSelect || !catSelect) return;
+  
+  userSelect.innerHTML = Object.keys(usersData)
+    .filter(u => u !== currentUser)
+    .map(u => `<option value="${u}">${u}</option>`).join('');
+    
+  if (currentUser && usersData[currentUser].inventory) {
+    catSelect.innerHTML = usersData[currentUser].inventory
+      .map((item, idx) => `<option value="${idx}">${item.icon || '📦'} ${item.name}</option>`).join('');
+  }
+}
+
+function sendTradeMoney() {
+  const target = document.getElementById('trade-target-user').value;
+  const amount = parseInt(document.getElementById('trade-amount').value) || 0;
+  
+  if (!target || !usersData[target]) return alert('Игрок не выбран!');
+  if (amount <= 0 || amount > getBalance()) return alert('Недостаточно денег!');
+  
+  setBalance(getBalance() - amount);
+  usersData[target].balance += amount;
+  saveState();
+  updateUI();
+  document.getElementById('msg-trade').textContent = `✅ Успешно переведено ${amount.toLocaleString()} 💰 игроку ${target}!`;
+  playSound('trade');
+}
+
+function sendTradeCat() {
+  const target = document.getElementById('trade-target-user').value;
+  const catIdx = parseInt(document.getElementById('trade-target-cat').value);
+  
+  if (!target || !usersData[target]) return alert('Игрок не выбран!');
+  const inv = usersData[currentUser].inventory || [];
+  if (isNaN(catIdx) || !inv[catIdx]) return alert('Кот не выбран!');
+  
+  const cat = inv.splice(catIdx, 1)[0];
+  if (!usersData[target].inventory) usersData[target].inventory = [];
+  usersData[target].inventory.push(cat);
+  
+  saveState();
+  updateUI();
+  document.getElementById('msg-trade').textContent = `✅ Кот ${cat.name} успешно подарен игроку ${target}!`;
+  playSound('trade');
+}
+
+// === ИГРА 15: ИНВЕНТАРЬ ===
+function renderInventory() {
+  const grid = document.getElementById('inventory-grid');
+  const inv = usersData[currentUser].inventory || [];
+  if (inv.length === 0) {
+    grid.innerHTML = '<p style="color:#aaa; grid-column:span 2;">Инвентарь пуст</p>';
+    return;
+  }
+  grid.innerHTML = inv.map((item, idx) => `
+    <div class="card-item rarity-epic">
+      <div class="card-img-box">${item.icon || '📦'}</div>
+      <b>${item.name}</b>
+      <button class="btn-sm" style="background:#ff0055; width:100%; margin-top:4px;" onclick="sellItem(${idx})">Продать (${item.price || 2000} 💰)</button>
+    </div>
+  `).join('');
+}
+
+function sellItem(idx) {
+  const inv = usersData[currentUser].inventory || [];
+  const item = inv[idx];
+  const price = item.price || 2000;
+  setBalance(getBalance() + price);
+  inv.splice(idx, 1);
+  saveState();
+  renderInventory();
+  playSound('win');
+}
+
+// === АДМИН ПАНЕЛЬ ===
+function updateAdminLists() {
+  const userSelect = document.getElementById('admin-target-user');
+  const catSelect = document.getElementById('admin-cat-spawn-select');
+  if (!userSelect || !catSelect) return;
+  
+  userSelect.innerHTML = Object.keys(usersData).map(u => `<option value="${u}">${u} (${usersData[u].balance.toLocaleString()} 💰)</option>`).join('');
+  catSelect.innerHTML = denchikCats.map((c, i) => `<option value="${i}">${c.icon} ${c.name} (${c.price.toLocaleString()} 💰)</option>`).join('');
+}
+
+function adminAddSelf(amount) {
+  setBalance(getBalance() + amount);
+  document.getElementById('msg-admin').textContent = `✅ Накручено +${amount.toLocaleString()} 💰 себе!`;
+  playSound('win');
+}
+
+function adminSpawnCat() {
+  const catIdx = parseInt(document.getElementById('admin-cat-spawn-select').value);
+  const cat = denchikCats[catIdx];
+  if (!cat) return;
+  usersData[currentUser].inventory.push({ name: cat.name, icon: cat.icon, price: Math.floor(cat.price * 0.7) });
+  saveState();
+  updateUI();
+  document.getElementById('msg-admin').textContent = `✅ Кот ${cat.name} заспавнен себе в инвентарь!`;
+  playSound('win');
+}
+
+function adminTogglePinTop() {
+  isTopPinned = !isTopPinned;
+  saveState();
+  updateUI();
+  document.getElementById('msg-admin').textContent = isTopPinned ? '✅ Картошкин закреплен на 1 МЕСТЕ!' : '❌ Откреплен от 1 места.';
+  playSound('win');
+}
+
+function adminGiveMoney() {
+  const target = document.getElementById('admin-target-user').value;
+  const amount = parseInt(document.getElementById('admin-give-amount').value) || 0;
+  if (!target || !usersData[target]) return alert('Игрок не выбран!');
+  usersData[target].balance += amount;
+  saveState();
+  updateUI();
+  document.getElementById('msg-admin').textContent = `✅ Выдано ${amount.toLocaleString()} 💰 игроку ${target}!`;
+  playSound('win');
+}
+
+// === БЕГУЩИЕ ЛАЙВ-НОВОСТИ ===
+const liveNewsList = [
+  "🔥 Игрок Картошкин сорвал джекпот в Слотах!",
+  "🚀 Ракета в Краше вылетела на 45.8x!",
+  "👑 Кот Денчик выдал новые промокоды!",
+  "📉 Курс DEN-BTC вырос на 25% за минуту!",
+  "💎 Кто-то выбил ВСЕВЫШНЕГО ДЕНЧИКА из кейса!"
+];
+let newsIdx = 0;
+setInterval(() => {
+  newsIdx = (newsIdx + 1) % liveNewsList.length;
+  const el = document.getElementById('news-text-content');
+  if (el) el.textContent = liveNewsList[newsIdx];
+}, 4000);
+
+let sec = 20;
+setInterval(() => {
+  sec--; document.getElementById('timer-sec').textContent = sec;
+  if (sec <= 0) { sec = 20; if (currentUser) setBalance(getBalance() + 5000); }
+}, 1000);
+
+// === АВТО-ВХОД ===
+window.onload = () => {
+  const savedUser = localStorage.getItem('karto_current_user');
+  if (savedUser && usersData[savedUser]) {
+    currentUser = savedUser;
+    closeModal('auth-modal');
+  }
+  updateUI();
+};
+</script>
+</body>
+</html>
